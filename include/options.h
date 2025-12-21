@@ -14,5 +14,6 @@ typedef struct {
 } options_t;
 
 options_t *get_options(int argc, char *argv[]);
+void free_options(options_t *options);
 
 #endif

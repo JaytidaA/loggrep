@@ -222,3 +222,10 @@ void handle_before_time(char *print, char *fmt, char *optarg, bool *has_before, 
 		*before = temp_time;
 	}
 }
+
+void free_options(options_t *options)
+{
+	free(options->tfil);
+	free(options->mfil);
+	free(options);
+}
