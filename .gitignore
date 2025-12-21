@@ -56,3 +56,6 @@ dkms.conf
 
 # extra
 .gitignore
+internals.md
+internals/
+.clangd
