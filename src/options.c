@@ -9,10 +9,10 @@
 #include <time.h>
 #include <string.h>
 
-void handle_after(char *print, char *fmt, char *optarg, bool *has_after, time_t *after);
-void handle_before(char *print, char *fmt, char *optarg, bool *has_before, time_t *before);
-void handle_after_time(char *print, char *fmt, char *optarg, bool *has_after, int *after);
-void handle_before_time(char *print, char *fmt, char *optarg, bool *has_before, int *before);
+void handle_after(char *print, char *fmt, char *optarg, bool *has_after, time_t *after, char *progname);
+void handle_before(char *print, char *fmt, char *optarg, bool *has_before, time_t *before, char *progname);
+void handle_after_time(char *print, char *fmt, char *optarg, bool *has_after, int *after, char *progname);
+void handle_before_time(char *print, char *fmt, char *optarg, bool *has_before, int *before, char *progname);
 
 options_t *get_options(int argc, char *argv[])
 {
@@ -49,39 +49,39 @@ options_t *get_options(int argc, char *argv[])
 			// Time based filtering
 			case 'a':
 				ret->has_tfil = true;
-				handle_after("datetime", DATETIME_STR, optarg, &tfil->has_after, &tfil->after);
+				handle_after("datetime", DATETIME_STR, optarg, &tfil->has_after, &tfil->after, argv[0]);
 				break;
 			case 'b':
 				ret->has_tfil = true;
-				handle_before("datetime", DATETIME_STR, optarg, &tfil->has_before, &tfil->before);
+				handle_before("datetime", DATETIME_STR, optarg, &tfil->has_before, &tfil->before, argv[0]);
 				break;
 			case 'd':
 				ret->has_tfil = true;
-				handle_after("date", DATE_STR, optarg, &tfil->has_after, &tfil->after);
+				handle_after("date", DATE_STR, optarg, &tfil->has_after, &tfil->after, argv[0]);
 				break;
 			case 'D':
 				ret->has_tfil = true;
-				handle_before("date", DATE_STR, optarg, &tfil->has_before, &tfil->before);
+				handle_before("date", DATE_STR, optarg, &tfil->has_before, &tfil->before, argv[0]);
 				break;
 			case 't':
 				ret->has_tfil = true;
-				handle_after_time("time", TIME_STR, optarg, &tfil->has_after_time, &tfil->after_time);
+				handle_after_time("time", TIME_STR, optarg, &tfil->has_after_time, &tfil->after_time, argv[0]);
 				break;
 			case 'T':
 				ret->has_tfil = true;
-				handle_before_time("time", TIME_STR, optarg, &tfil->has_before_time, &tfil->before_time);
+				handle_before_time("time", TIME_STR, optarg, &tfil->has_before_time, &tfil->before_time, argv[0]);
 				break;
 			case 'H':
 				ret->has_tfil = true;
 				tfil->has_hour = true;
 				tfil->hour = (int) strtol(optarg, &endptr, 10);
 				if (*endptr != '\0') {
-					fprintf(stderr, "malformed input for hour.\n");
+					fprintf(stderr, "%s: malformed input for hour.\n", argv[0]);
 					exit(ERR_MALFORMED_INPUT);
 				}
 
 				if (tfil->hour < 0 || tfil->hour > 23) {
-					fprintf(stderr, "out of range input for hour.\n");
+					fprintf(stderr, "%s: out of range input for hour.\n", argv[0]);
 					exit(ERR_OUT_OF_RANGE_INPUT);
 				}
 
@@ -91,12 +91,12 @@ options_t *get_options(int argc, char *argv[])
 				tfil->has_minute = true;
 				tfil->minute = (int) strtol(optarg, &endptr, 10);
 				if (*endptr != '\0') {
-					fprintf(stderr, "malformed input for minute.\n");
+					fprintf(stderr, "%s: malformed input for minute.\n", argv[0]);
 					exit(ERR_MALFORMED_INPUT);
 				}
 
 				if (tfil->minute < 0 || tfil->minute > 59) {
-					fprintf(stderr, "out of range input for minute.\n");
+					fprintf(stderr, "%s: out of range input for minute.\n", argv[0]);
 					exit(ERR_OUT_OF_RANGE_INPUT);
 				}
 
@@ -105,8 +105,9 @@ options_t *get_options(int argc, char *argv[])
 			// Message based filtering
 			case 'm':
 				ret->has_mfil = true;
-				mfil->length = ((strlen(optarg) <= LOG_STR_SIZE) ? strlen(optarg) : LOG_STR_SIZE) + 1;
-				mfil->message = malloc(mfil->length);
+				size_t arglen = strlen(optarg);
+				mfil->length = ((arglen <= LOG_STR_SIZE) ? arglen : LOG_STR_SIZE);
+				mfil->message = malloc(mfil->length + 1);
 				if (!mfil->message) {
 					perror("get_mssg_filter: malloc");
 					free(ret->tfil);
@@ -116,6 +117,7 @@ options_t *get_options(int argc, char *argv[])
 				}
 
 				memcpy(mfil->message, optarg, mfil->length);
+				mfil->message[mfil->length] = '\0';
 				break;
 			case 'c':
 				ret->has_colour = true;
@@ -139,7 +141,7 @@ options_t *get_options(int argc, char *argv[])
 	return ret;
 }
 
-void handle_after(char *print, char *fmt, char *optarg, bool *has_after, time_t *after)
+void handle_after(char *print, char *fmt, char *optarg, bool *has_after, time_t *after, char *progname)
 {
 	struct tm temp = {0};
 	time_t temp_time;
@@ -147,7 +149,7 @@ void handle_after(char *print, char *fmt, char *optarg, bool *has_after, time_t 
 
 	end = strptime(optarg, fmt, &temp);
 	if (!end || *end != '\0') {
-		fprintf(stderr, "invalid or malformed input for %s.\n", print);
+		fprintf(stderr, "%s: invalid or malformed input for %s.\n", progname, print);
 		exit(ERR_MALFORMED_INPUT);
 	}
 
@@ -160,7 +162,7 @@ void handle_after(char *print, char *fmt, char *optarg, bool *has_after, time_t 
 	}
 }
 
-void handle_before(char *print, char *fmt, char *optarg, bool *has_before, time_t *before)
+void handle_before(char *print, char *fmt, char *optarg, bool *has_before, time_t *before, char *progname)
 {
 	struct tm temp = {0};
 	time_t temp_time;
@@ -168,7 +170,7 @@ void handle_before(char *print, char *fmt, char *optarg, bool *has_before, time_
 
 	end = strptime(optarg, fmt, &temp);
 	if (!end || *end != '\0') {
-		fprintf(stderr, "invalid or malformed input for %s.\n", print);
+		fprintf(stderr, "%s: invalid or malformed input for %s.\n", progname, print);
 		exit(ERR_MALFORMED_INPUT);
 	}
 
@@ -181,7 +183,7 @@ void handle_before(char *print, char *fmt, char *optarg, bool *has_before, time_
 	}
 }
 
-void handle_after_time(char *print, char *fmt, char *optarg, bool *has_after, int *after)
+void handle_after_time(char *print, char *fmt, char *optarg, bool *has_after, int *after, char *progname)
 {
 	struct tm temp = {0};
 	time_t temp_time;
@@ -189,7 +191,7 @@ void handle_after_time(char *print, char *fmt, char *optarg, bool *has_after, in
 
 	end = strptime(optarg, fmt, &temp);
 	if (!end || *end != '\0') {
-		fprintf(stderr, "invalid or malformed input for %s.\n", print);
+		fprintf(stderr, "%s: invalid or malformed input for %s.\n", progname, print);
 		exit(ERR_MALFORMED_INPUT);
 	}
 
@@ -202,7 +204,7 @@ void handle_after_time(char *print, char *fmt, char *optarg, bool *has_after, in
 	}
 }
 
-void handle_before_time(char *print, char *fmt, char *optarg, bool *has_before, int *before)
+void handle_before_time(char *print, char *fmt, char *optarg, bool *has_before, int *before, char *progname)
 {
 	struct tm temp = {0};
 	time_t temp_time;
@@ -210,7 +212,7 @@ void handle_before_time(char *print, char *fmt, char *optarg, bool *has_before, 
 
 	end = strptime(optarg, fmt, &temp);
 	if (!end || *end != '\0') {
-		fprintf(stderr, "invalid or malformed input for %s.\n", print);
+		fprintf(stderr, "%s: invalid or malformed input for %s.\n", progname, print);
 		exit(ERR_MALFORMED_INPUT);
 	}
 

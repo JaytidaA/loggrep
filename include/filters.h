@@ -27,11 +27,32 @@ typedef struct {
 	char *message;
 } mssg_filter;
 
+/* Taking inspiration from regmatch_t.
+   See <regex.h> */
+typedef struct {
+	size_t so_sm;
+	size_t eo_sm;
+} strmatch_t;
+
 #ifdef DEBUG
 void print_time_filter(time_filter *tfil);
 void print_mssg_filter(mssg_filter *mfil);
 #endif
 
 bool pass_time_filter(time_filter *tfil, struct tm *tm);
+
+/* Container to store the result of pass_mssg_filter */
+typedef struct {
+	bool pass;
+	size_t matchlen;
+	strmatch_t *matches;
+} pass_mssg_filter_t;
+
+/* Helper type because I am too lazy to write out the entire
+   name of the type. This type is always returned by value. */
+typedef pass_mssg_filter_t pmft;
+
+pass_mssg_filter_t pass_mssg_filter(mssg_filter *mfil, char *log);
+void free_pmft(pass_mssg_filter_t pmft);
 
 #endif
