@@ -227,6 +227,7 @@ void handle_before_time(char *print, char *fmt, char *optarg, bool *has_before, 
 
 void free_options(options_t *options)
 {
+	free(options->mfil->message);
 	free(options->tfil);
 	free(options->mfil);
 	free(options);

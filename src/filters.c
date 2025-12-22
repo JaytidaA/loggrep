@@ -55,24 +55,28 @@ bool pass_time_filter(time_filter *tfil, struct tm *tm)
 	return true;
 }
 
-pass_mssg_filter_t pass_mssg_filter(mssg_filter *mfil, char *log)
+pass_mssg_filter_t pass_mssg_filter(mssg_filter *mfil, const char *log)
 {
 	size_t len = 0;
 	strmatch_t *matches = NULL;
 	char *substart;
-	while ((substart = strstr(log, mfil->message))) {
+
+	const char *base = log;
+	const char *cursor = log;
+
+	while ((substart = strstr(cursor, mfil->message))) {
 		len++;
 		matches = (strmatch_t *) realloc(matches, len * sizeof(strmatch_t));
 		if (!matches) {
+			free(matches);
 			perror("pass_mssg_filter: realloc");
 			// handle conservatively
 			return (pass_mssg_filter_t) {false, 0, NULL}; 
 		}
 
-		matches[len - 1].so_sm = (size_t) (substart - log);
-		matches[len - 1].eo_sm = (size_t) (substart - log + mfil->length);
-
-		log = &log[matches[len - 1].eo_sm];
+		matches[len - 1].so_sm = (size_t) (substart - base);
+		matches[len - 1].eo_sm = matches[len - 1].so_sm + mfil->length;
+		cursor = substart + mfil->length;
 	}
 
 	if (len)
@@ -81,9 +85,10 @@ pass_mssg_filter_t pass_mssg_filter(mssg_filter *mfil, char *log)
 		return (pass_mssg_filter_t) {false, 0, NULL};
 }
 
-void free_pmft(pass_mssg_filter_t pmft)
+void free_pmft(pass_mssg_filter_t *pmft)
 {
-	// pmft only contains the array to be deallocated
-	// which is a pointer that is copied.
-	free(pmft.matches);
+	free(pmft->matches);
+	pmft->pass = false;
+	pmft->matchlen = 0;
+	pmft->matches = NULL;
 }

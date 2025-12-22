@@ -52,7 +52,9 @@ typedef struct {
    name of the type. This type is always returned by value. */
 typedef pass_mssg_filter_t pmft;
 
-pass_mssg_filter_t pass_mssg_filter(mssg_filter *mfil, char *log);
-void free_pmft(pass_mssg_filter_t pmft);
+pass_mssg_filter_t pass_mssg_filter(mssg_filter *mfil, const char *log);
+
+/* free the pass_mssg_filter_t contents */
+void free_pmft(pass_mssg_filter_t *pmft);
 
 #endif
