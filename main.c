@@ -22,6 +22,9 @@ int main(int argc, char *argv[])
 	ssize_t ret;
 
 	options_t *opts = get_options(argc, argv);
+	time_filter *tfil = NULL;
+	mssg_filter *mfil = NULL;
+	FILE *input = NULL;
 
 	if (opts->has_version) {
 		printf("%s %s\n", argv[0], LOGGREP_VERSION);
@@ -34,22 +37,30 @@ int main(int argc, char *argv[])
 		return EXIT_SUCCESS;
 	}
 
-	time_filter *tfil = NULL;
-	mssg_filter *mfil = NULL;
 	if (opts->has_tfil)
 		tfil = opts->tfil;
 	if (opts->has_mfil)
 		mfil = opts->mfil;
 	if (!tfil && !mfil) {
 		free_options(opts);
-		fprintf(stderr, "%s: no options specified, exiting early.\n", argv[0]);
+		fprintf(stderr, "%s: no filters specified, exiting early.\n", argv[0]);
+		return EXIT_FAILURE;
+	}
+
+	if (opts->has_file)
+		input = fopen(opts->filename, "r");
+	else
+		input = stdin;
+	if (!input) {
+		free_options(opts);
+		perror("fopen");
 		return EXIT_FAILURE;
 	}
 
 	struct tm tm = {0};
 	char *next = NULL;
 
-	while ((ret = getline(&lineptr, &length, stdin)) != -1) {
+	while ((ret = getline(&lineptr, &length, input)) != -1) {
 		// If no allocation
 		if (!lineptr)
 			continue;
@@ -59,6 +70,7 @@ int main(int argc, char *argv[])
 		next = strptime(lineptr, DATETIME_STR, &tm);
 		if (!next) {
 			fprintf(stderr, "%s: unexpected date time string format!\n", argv[0]);
+			free_options(opts); fclose(input);
 			exit(ERR_MALFORMED_INPUT);
 		}
 
@@ -93,11 +105,12 @@ int main(int argc, char *argv[])
 	// Handle getline error
 	if (errno) {
 		perror("getline");
-		free_options(opts);
+		free_options(opts); fclose(input);
 		return EXIT_FAILURE;
 	}
 
 	free(lineptr);
 	free_options(opts);
+	fclose(input);
 	return 0;
 }

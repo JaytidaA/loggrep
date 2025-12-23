@@ -44,7 +44,7 @@ options_t *get_options(int argc, char *argv[])
 
 	char *endptr;
 
-	while ((opt = getopt(argc, argv, "a:b:d:D:t:T:H:M:m:chv")) != -1) {
+	while ((opt = getopt(argc, argv, "a:b:d:D:t:T:H:M:m:chvf:")) != -1) {
 		switch (opt) {
 			// Time based filtering
 			case 'a':
@@ -127,6 +127,10 @@ options_t *get_options(int argc, char *argv[])
 				break;
 			case 'v':
 				ret->has_version = true;
+				break;
+			case 'f':
+				ret->has_file = true;
+				ret->filename = optarg;
 				break;
 			default:
 				exit(ERR_UNKNOWN_OPTION);
