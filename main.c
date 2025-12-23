@@ -7,10 +7,11 @@
 #include <time.h>
 #include <errno.h>
 
-#include "filters.h"
-#include "options.h"
 #include "config.h"
 #include "utils.h"
+#include "filters.h"
+#include "options.h"
+#include "colours.h"
 
 int main(int argc, char *argv[])
 {
@@ -54,6 +55,7 @@ int main(int argc, char *argv[])
 			continue;
 
 		lineptr[ret - 1] = '\0';
+
 		next = strptime(lineptr, DATETIME_STR, &tm);
 		if (!next) {
 			fprintf(stderr, "%s: unexpected date time string format!\n", argv[0]);
@@ -79,7 +81,13 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		puts(lineptr);
+		if (opts->has_colour)
+			print_colour(
+				lineptr, ret - 1, pass_mfil.matches,
+				pass_mfil.matchlen, opts->has_tfil
+			);
+		else
+			puts(lineptr);
 	}
 
 	// Handle getline error
