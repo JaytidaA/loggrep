@@ -15,8 +15,6 @@
 
 int main(int argc, char *argv[])
 {
-	initialise(argv[0]);
-
 	char *lineptr = NULL;
 	size_t length = 0;
 	ssize_t ret;
@@ -57,6 +55,7 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
+	initialise(argv[0], input);
 	struct tm tm = {0};
 	char *next = NULL;
 
@@ -70,7 +69,7 @@ int main(int argc, char *argv[])
 		next = strptime(lineptr, DATETIME_STR, &tm);
 		if (!next) {
 			fprintf(stderr, "%s: unexpected date time string format!\n", argv[0]);
-			free_options(opts); fclose(input);
+			free_options(opts);
 			exit(ERR_MALFORMED_INPUT);
 		}
 
@@ -105,12 +104,11 @@ int main(int argc, char *argv[])
 	// Handle getline error
 	if (errno) {
 		perror("getline");
-		free_options(opts); fclose(input);
+		free_options(opts);
 		return EXIT_FAILURE;
 	}
 
 	free(lineptr);
 	free_options(opts);
-	fclose(input);
 	return 0;
 }
