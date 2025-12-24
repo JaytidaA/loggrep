@@ -31,7 +31,7 @@ void print_colour(const char *log, int n, strmatch_t *match, size_t mlen, bool h
 		printf(COLOUR_END);
 	}
 
-	while (p < n)
+	while (p < (size_t) n)
 		putchar(log[p++]);
 	putchar('\n');
 }

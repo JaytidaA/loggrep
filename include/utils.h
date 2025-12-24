@@ -1,5 +1,6 @@
 #ifndef LG_UTILS_H
 #define LG_UTILS_H
+#define _DEFAULT_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
 
